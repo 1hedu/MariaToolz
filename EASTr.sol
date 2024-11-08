@@ -178,6 +178,7 @@ interface IDexFactory {
     function createPair(address,address) external returns(address);
 }
 
+
 contract EASTr is ERC20, Ownable {
     mapping(address => uint256) private _protection;
     mapping(address => bool) private _noFees;
@@ -195,6 +196,7 @@ contract EASTr is ERC20, Ownable {
     uint256 public maxSwap;
     uint256 public taxSplit = 100;
     uint256 public tradingActiveTime;
+    uint256 public taxFee = 1;
 
     bool private _swapping;
     bool public swapOn = true;
@@ -242,6 +244,11 @@ contract EASTr is ERC20, Ownable {
         swapAt = at;
         maxSwap = max;
     }
+    
+    function setTaxFee(uint256 _taxFee) external onlyOwner {
+    require(_taxFee > 0 && _taxFee <= 100, "Tax fee must be between 1 and 100");
+    taxFee = _taxFee;
+    }
 
     function setTaxCollector(address wallet) external onlyOwner {
         taxCollector = wallet;
@@ -283,7 +290,7 @@ contract EASTr is ERC20, Ownable {
         }
 
         if(!_noFees[from] && !_noFees[to]) {
-            uint256 fee = amount / 100;
+            uint256 fee = amount * taxFee / 100;
             if(fee > 0) {
                 super._transfer(from, address(this), fee);
                 if(swapOn && !_swapping && _pairs[to]) {
