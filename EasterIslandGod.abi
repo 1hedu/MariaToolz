@@ -1,0 +1,125 @@
+[
+{
+"anonymous": false,
+"inputs": [
+{
+"indexed": true,
+"internalType": "address",
+"name": "deployer",
+"type": "address"
+},
+{
+"indexed": true,
+"internalType": "address",
+"name": "token",
+"type": "address"
+}
+],
+"name": "EASTrDeployed",
+"type": "event"
+},
+{
+"inputs": [
+{
+"internalType": "string",
+"name": "name",
+"type": "string"
+},
+{
+"internalType": "string",
+"name": "ticker",
+"type": "string"
+},
+{
+"internalType": "uint256",
+"name": "supply",
+"type": "uint256"
+},
+{
+"internalType": "address",
+"name": "rewardToken",
+"type": "address"
+},
+{
+"internalType": "uint256",
+"name": "split",
+"type": "uint256"
+}
+],
+"name": "EasterIslandTaxCollector",
+"outputs": [
+{
+"internalType": "address payable",
+"name": "token",
+"type": "address"
+}
+],
+"stateMutability": "nonpayable",
+"type": "function"
+},
+{
+"inputs": [],
+"name": "FEE_TOKEN",
+"outputs": [
+{
+"internalType": "address",
+"name": "",
+"type": "address"
+}
+],
+"stateMutability": "view",
+"type": "function"
+},
+{
+"inputs": [],
+"name": "INITIAL_FEE",
+"outputs": [
+{
+"internalType": "uint256",
+"name": "",
+"type": "uint256"
+}
+],
+"stateMutability": "view",
+"type": "function"
+},
+{
+"inputs": [],
+"name": "WALLET_10",
+"outputs": [
+{
+"internalType": "address",
+"name": "",
+"type": "address"
+}
+],
+"stateMutability": "view",
+"type": "function"
+},
+{
+"inputs": [],
+"name": "WALLET_90",
+"outputs": [
+{
+"internalType": "address",
+"name": "",
+"type": "address"
+}
+],
+"stateMutability": "view",
+"type": "function"
+},
+{
+"inputs": [],
+"name": "deployCount",
+"outputs": [
+{
+"internalType": "uint256",
+"name": "",
+"type": "uint256"
+}
+],
+"stateMutability": "view",
+"type": "function"
+}
+]
