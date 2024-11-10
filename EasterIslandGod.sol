@@ -37,25 +37,20 @@ contract EASTrIsLAUndGOD {
         require(IERC20(FEE_TOKEN).transferFrom(msg.sender, WALLET_90, (deployFee * 90) / 100));
         require(IERC20(FEE_TOKEN).transferFrom(msg.sender, WALLET_10, deployFee / 10));
 
-        token = payable (address(new EASTr(
+        token = payable(address(new EASTr(
             name,
             ticker,
             supply,
             rewardToken,
-            tokenFee
+            tokenFee,
+            msg.sender  
         )));
 
         EASTr(token).setSplit(rewardPercentage);
         EASTr(token).setTaxCollector(msg.sender);
         EASTr(token).transferOwnership(msg.sender);
 
-        uint256 contractBalance = EASTr(token).balanceOf(address(this));
-        if (contractBalance > 0) {
-            EASTr(token).transfer(msg.sender, contractBalance);
-        }
-
         unchecked { deployCount++; }
         emit EASTrDeployed(msg.sender, token);
-        
     }
 }
