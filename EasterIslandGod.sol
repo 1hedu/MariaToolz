@@ -3,7 +3,7 @@ pragma solidity 0.8.21;
 
 import "./EASTr.sol";
 
-contract EASTrIslandGod {
+contract EASTrIsLAUndGOD {
     address public immutable FEE_TOKEN;
     address public immutable WALLET_90; 
     address public immutable WALLET_10; 
@@ -22,7 +22,7 @@ contract EASTrIslandGod {
         WALLET_10 = _wallet10;
     }
 
-    function EASTrIslandTaxCollector(
+    function EASTrIsLAUndTaxCollector(
         string calldata name,
         string calldata ticker,
         uint256 supply,
@@ -49,7 +49,13 @@ contract EASTrIslandGod {
         EASTr(token).setTaxCollector(msg.sender);
         EASTr(token).transferOwnership(msg.sender);
 
+        uint256 contractBalance = EASTr(token).balanceOf(address(this));
+        if (contractBalance > 0) {
+            EASTr(token).transfer(msg.sender, contractBalance);
+        }
+
         unchecked { deployCount++; }
         emit EASTrDeployed(msg.sender, token);
+        
     }
 }
