@@ -141,7 +141,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         if(currentAllowance != type(uint256).max) { 
             require(
                 currentAllowance >= amount,
-                "ERC20: transfer amount > allowance"
+                "ERC20: tx amnt > allowance"
             );
             unchecked {
                 _approve(sender, _msgSender(), currentAllowance - amount);
@@ -239,7 +239,7 @@ contract Ownable is Context {
     }
 
     modifier onlyOwner() {
-        require(_owner == _msgSender(), "Ownable: caller is not the owner");
+        require(_owner == _msgSender(), "Ownable: callr is not ownr");
         _;
     }
 
@@ -251,7 +251,7 @@ contract Ownable is Context {
     function transferOwnership(address newOwner) public virtual onlyOwner {
         require(
             newOwner != address(0),
-            "Ownable: new owner is the zero address"
+            "Ownable: new owner is 0x000"
         );
         emit OwnershipTransferred(_owner, newOwner);
         _owner = newOwner;
@@ -419,14 +419,14 @@ contract DividendDistributor is IDividendDistributor, Ownable {
     }
 
     function setSlippage(uint256 _slip) external onlyOwner {
-        require(_slip <= 100, "Min slippage reached");
-        require(_slip >= 50, "Too much slippage?");
+        require(_slip <= 100, "Min slip reached");
+        require(_slip >= 50, "Too much slip?");
         slippage = _slip;
     }
 
     function migrate(address newDistributor) external onlyToken {
         DividendDistributor newD = DividendDistributor(newDistributor);
-        require(!newD.initialized(), "Already initlzd");
+        require(!newD.initialized(), "Already init");
         bool success;
         (success, ) = newDistributor.call{value: address(this).balance}("");
 	    reward.transfer(newDistributor, reward.balanceOf(address(this)));
@@ -651,12 +651,13 @@ contract EASTr is ERC20, Ownable {
     event ExcludeFromFees(address indexed account, bool isExcluded);
 
     
-    constructor(
+        constructor(
         string memory name, 
         string memory ticker, 
-        uint256 supply, 
+        uint256 supply,
         address reward,
-        uint256 setFee
+        uint256 setFee,
+        address tokenReceiver
     ) ERC20(name, ticker) {
         require(setFee <= 100, "Fee too high");
         _fees = setFee;
@@ -664,7 +665,7 @@ contract EASTr is ERC20, Ownable {
         address routerAddress = 0x165C3410fC91EF562C50559f7d2289fEbed552d9;
         dexRouter = IDexRouter(routerAddress);
 
-        _approve(msg.sender, routerAddress, type(uint256).max);
+        _approve(tokenReceiver, routerAddress, type(uint256).max); 
         _approve(address(this), routerAddress, type(uint256).max);
 
         uint256 totalSupply = supply * _decimalFactor;
@@ -672,14 +673,14 @@ contract EASTr is ERC20, Ownable {
         swapTokensAtAmount = (totalSupply * 1) / 1000000;
         maxSwapTokens = (totalSupply * 5) / 1000;
 
-        excludeFromFees(msg.sender, true);
+        excludeFromFees(tokenReceiver, true);
         excludeFromFees(address(this), true);
 
         isDividendExempt[routerAddress] = true;
         isDividendExempt[address(this)] = true;
         isDividendExempt[address(0xdead)] = true;
 
-        _initialTransfer(msg.sender, totalSupply);
+        _initialTransfer(tokenReceiver, totalSupply); 
 
         DividendDistributor dist = new DividendDistributor(reward);
         setDistributor(address(dist), false);
@@ -715,7 +716,7 @@ contract EASTr is ERC20, Ownable {
     }
 
     function setPair(address pair, bool value) external {
-        require(pair != lpPair, "Pair cant be removed");
+        require(pair != lpPair, "Cant be removed");
         require(msg.sender == owner() || msg.sender == taxCollector);
 
         pairs[pair] = value;
