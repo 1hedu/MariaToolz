@@ -32,7 +32,15 @@ contract EASTrIsLAUndGOD {
     ) external returns (address payable token) {
         require(supply > 0 && rewardPercentage <= 100 && tokenFee <= 100);
 
-        uint256 deployFee = deployCount < 100 ? INITIAL_FEE : INITIAL_FEE * (1 + ((deployCount - 100) / 10));
+        uint256 deployFee;
+        if(deployCount < 100) {
+            deployFee = INITIAL_FEE;
+        } else {
+         
+            uint256 doublesAfter100 = (deployCount - 100);
+    
+            deployFee = INITIAL_FEE * (2 ** doublesAfter100);
+        }
 
         require(IERC20(FEE_TOKEN).transferFrom(msg.sender, WALLET_90, (deployFee * 90) / 100));
         require(IERC20(FEE_TOKEN).transferFrom(msg.sender, WALLET_10, deployFee / 10));
@@ -43,7 +51,7 @@ contract EASTrIsLAUndGOD {
             supply,
             rewardToken,
             tokenFee,
-            msg.sender  
+            msg.sender
         )));
 
         EASTr(token).setSplit(rewardPercentage);
