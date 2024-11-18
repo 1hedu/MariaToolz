@@ -13,7 +13,7 @@ Works like the LAU factory, where you run a function to deploy a token. It costs
 To use: First Approve 1 AFFECTION to be spent by the EasterIslandGod Contract. Then run 'EasterIslandTaxCollector' function.
 
 My EASTr deployments: Once setup, all are set to 100% rewards, 0% tax collector.
-
+---------------------------------------------------------------------------------
 EASTr - 0x20A619a41B6FC1A42d571940eBc37702449f3D6b - 3% 1d4r3k (🗿) Reward
 
 MISSr - 0x20A619a41B6FC1A42d571940eBc37702449f3D6b - 3% MissingNo. Reward
