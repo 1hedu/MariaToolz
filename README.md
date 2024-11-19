@@ -3,6 +3,7 @@ MariaToolz.py
 
 Context.txt must be in same directory as the script, otherwise it does a full scan on addresses.sol.
 
+Context.txt is a list of Contract Addresses, one per line, and can be used to point the tool at any assemblage of tokens you wish.
 
 
 EasterIslandGod - 0x56240685Db126Abd58F2Cf1b4aD1715F1933604b
