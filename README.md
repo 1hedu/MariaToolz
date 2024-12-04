@@ -6,7 +6,7 @@ Context.txt must be in same directory as the script, otherwise it does a full sc
 Context.txt is a list of Contract Addresses, one per line, and can be used to point the tool at any assemblage of tokens you wish.
 
 
-EasterIslandGod - 0x56240685Db126Abd58F2Cf1b4aD1715F1933604b ![364486ff-4f10-4009-998a-f3b0027c77ad](https://github.com/user-attachments/assets/07939fe1-ad90-4496-a4d3-aaeeace9fc7e)
+EasterIslandGod - 0x56240685Db126Abd58F2Cf1b4aD1715F1933604b 
 
 -----------------------------------------------------------
 
