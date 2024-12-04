@@ -24,3 +24,14 @@ COCKr - 0xe133445FA26D80dbA2d61bfAA251A098CB034960 - 2% Grok Cock (GKCK) Reward
 GRANOLr - 0x9F25114978D61e9b3dcB1079666DBd90AbA969bf - 1% Granola Bar (BAR) Reward
 
 'O'TR'A - 0x21f0aD5b67eDD347DCF118F843EdeF6E29f3c166 - 3% Monotropa (MONOTROPA) Reward
+
+
+
+
+FALLAUT
+----------------------------------------------------------------------
+hallauween.my.canva.site/fallaut
+
+![Fallaut logo2](https://github.com/user-attachments/assets/dd1a7cc4-2ea1-46ff-84ee-8a2af6f5a877)
+
+Testing, CA:0x1049C3453a2EFDf7F8381F3fBb2a41e04f7A2C7E
