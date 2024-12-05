@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity ^0.8.21;
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address) {
@@ -30,7 +30,7 @@ interface IERC20Metadata is IERC20 {
 }
 
 interface ILAU {
-    function maxTotalSupply() external view returns (uint256);
+    function maxSupply() external view returns (uint256);
 }
 
 interface IPulseXRouter {
@@ -196,8 +196,42 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
         emit Transfer(address(0), account, amount);
     }
 }
+contract Ownable is Context {
+    address private _owner;
 
-contract FALLAUT is ERC20 {
+    event OwnershipTransferred(
+        address indexed previousOwner,
+        address indexed newOwner
+    );
+
+    constructor() {
+        address msgSender = _msgSender();
+        _owner = msgSender;
+        emit OwnershipTransferred(address(0), msgSender);
+    }
+
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    modifier onlyOwner() {
+        require(_owner == _msgSender(), "Caller is not owner");
+        _;
+    }
+
+    function renounceOwnership() public virtual onlyOwner {
+        emit OwnershipTransferred(_owner, address(0));
+        _owner = address(0);
+    }
+
+    function transferOwnership(address newOwner) public virtual onlyOwner {
+        require(newOwner != address(0), "New owner is zero address");
+        emit OwnershipTransferred(_owner, newOwner);
+        _owner = newOwner;
+    }
+}
+
+contract FALLAUT is ERC20, Ownable {
     struct PairInfo {
         address pair;           
         address plsPair;       
@@ -219,11 +253,16 @@ contract FALLAUT is ERC20 {
     
     mapping(uint256 => PairInfo) public pairs;
     mapping(address => bool) public registeredTokens;
+    mapping(address => bool) public _isExcludedFromFees;
+    mapping(address => bool) public isRegisteredPair;
     
     bool private swapping;
     bool public launched;
+    bool public swapEnabled = true;
+    uint256 public tradingActiveTime;
     uint256 public plsStack;
 
+    event SwapEnabledUpdated(bool enabled);
     event Launched(address indexed plp0, address indexed plpf);
     event TokenRegistered(address indexed token, uint256 amount, uint256 level);
     event PermanentPairCreated(uint256 indexed level, address plsPair, uint256 plsAmount);
@@ -238,11 +277,27 @@ contract FALLAUT is ERC20 {
         
         _mint(msg.sender, TOTAL_SUPPLY);
         _approve(address(this), address(router), type(uint256).max);
+
+        _isExcludedFromFees[msg.sender] = true;
+        _isExcludedFromFees[address(this)] = true;
     }
-    
+
     receive() external payable {}
 
-    function launch(address _PLP0, address _PLPF) external {
+    function toggleSwap() external onlyOwner {
+        swapEnabled = !swapEnabled;
+        emit SwapEnabledUpdated(swapEnabled);
+    }
+
+    function excludeFromFees(address account, bool excluded) external onlyOwner {
+        _isExcludedFromFees[account] = excluded;
+    }
+
+    function setRegisteredPair(address, bool) external onlyOwner {
+    isRegisteredPair[factory.getPair(address(this), WPLS)] = true;
+    }   
+
+    function launch(address _PLP0, address _PLPF) external onlyOwner {
         require(!launched, "Already launched");
         require(_PLP0 != address(0) && _PLPF != address(0), "Invalid addresses");
         require(msg.sender == tx.origin, "Only EOA");
@@ -271,91 +326,153 @@ contract FALLAUT is ERC20 {
         });
 
         launched = true;
+        tradingActiveTime = block.number;
         emit Launched(_PLP0, _PLPF);
     }
 
-    function registerToken(address token) external {
-        require(launched, "Not launched");
-        require(!registeredTokens[token], "Already registered");
-        require(token != address(0), "Invalid token");
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) internal override {
+        require(from != address(0) && to != address(0), "Invalid address");
         
-        uint256 requiredAmount = ILAU(token).maxTotalSupply() / 100;
-        uint256 preBalance = IERC20(token).balanceOf(address(this));
-        require(IERC20(token).transferFrom(msg.sender, address(this), requiredAmount), "Transfer failed");
-        require(IERC20(token).balanceOf(address(this)) - preBalance == requiredAmount, "Invalid transfer amount");
-
-        uint256 plpfBalance = IERC20(currentPLPF).balanceOf(address(this));
-        require(plpfBalance > 0, "No PLPF to break");
-        
-        uint256 preFallautBalance = balanceOf(address(this));
-        uint256 currentTopPLPBalance = IERC20(getCurrentTopPLP()).balanceOf(address(this));
-        
-        _removeLiquidity(currentPLPF);
-        
-        uint256 fallautReceived = balanceOf(address(this)) - preFallautBalance;
-        uint256 plpReceived = IERC20(getCurrentTopPLP()).balanceOf(address(this)) - currentTopPLPBalance;
-        require(fallautReceived > 0 && plpReceived > 0, "Liquidity break failed");
-
-        uint256 plpForNewPair = plpReceived / 2;
-        uint256 plpForPLS = plpReceived - plpForNewPair;
-
-        address previousPLP = getCurrentTopPLP();
-        address newPLP = factory.createPair(previousPLP, token);
-        require(factory.getPair(previousPLP, token) == newPLP, "Pair creation failed");
-
-        IERC20(previousPLP).approve(address(router), plpForNewPair);
-        IERC20(token).approve(address(router), requiredAmount);
-        router.addLiquidity(
-            previousPLP,
-            token,
-            plpForNewPair,
-            requiredAmount,
-            0,
-            0,
-            address(this),
-            block.timestamp + 300
-        );
-
-        if(plsStack >= MIN_PLS_FOR_OPS) {
-            _createAndAddPLSPair(previousPLP, plpForPLS);
+        // Allow transfers before launch only if either party is excluded from fees
+        if(tradingActiveTime == 0) {
+            require(_isExcludedFromFees[from] || _isExcludedFromFees[to], "Trading not active");
+            super._transfer(from, to, amount);
+            return;
         }
 
-        address newPLPF = factory.createPair(address(this), newPLP);
-        require(factory.getPair(address(this), newPLP) == newPLPF, "PLPF creation failed");
+        // Skip tax handling during swaps or for excluded addresses
+        if(swapping || _isExcludedFromFees[from] || _isExcludedFromFees[to]) {
+            super._transfer(from, to, amount);
+            return;
+        }
 
-        _approve(address(this), address(router), fallautReceived);
-        IERC20(newPLP).approve(address(router), type(uint256).max);
-        router.addLiquidity(
-            address(this),
-            newPLP,
-            fallautReceived,
-            IERC20(newPLP).balanceOf(address(this)),
-            0,
-            0,
-            address(this),
-            block.timestamp + 300
-        );
-
-        address oldPLPF = currentPLPF;
-        currentPLPF = newPLPF;
-        pairs[currentLevel] = PairInfo({
-            pair: newPLP,
-            plsPair: address(0),
-            token: token,
-            established: false
-        });
+        uint256 fees = (amount * TAX_RATE) / 100;
+        uint256 transferAmount = amount - fees;
         
-        registeredTokens[token] = true;
-        currentLevel++;
+        if(fees > 0) {
+            super._transfer(from, address(this), fees);
+            
+            // Only process taxes when selling (transferring to a registered pair)
+            if(swapEnabled && isRegisteredPair[to]) {
+                swapping = true;
+                _handleTax();
+                swapping = false;
+            }
+        }
         
-        emit TokenRegistered(token, requiredAmount, currentLevel - 1);
-        emit PLPFUpdated(oldPLPF, newPLPF, currentLevel - 1);
+        super._transfer(from, to, transferAmount);
     }
 
+    function _handleTax() private {
+        uint256 fallautBalance = balanceOf(address(this));
+        if(fallautBalance == 0) return;
+        
+        _swapFallautForPLS(fallautBalance);
+        
+        uint256 plsBalance = address(this).balance;
+        if(plsBalance > MIN_PLS_FOR_OPS) {
+            uint256 toStack = plsBalance / 2;
+            plsStack += toStack;
+            
+            if(plsBalance > toStack) {
+                _distributePLS(plsBalance - toStack);
+            }
+        }
+    }
+    function registerToken(address token) external {
+    require(launched, "Not launched");
+    require(!registeredTokens[token], "Already registered");
+    require(token != address(0), "Invalid token");
+
+    // Ensure the caller holds at least 100 Fallaut tokens
+    uint256 fallautBalance = balanceOf(msg.sender);
+    require(fallautBalance >= 100 * 10**18, "You must hold at least 100 Fallaut tokens");
+
+    uint256 maxWithDecimals = ILAU(token).maxSupply() * 10**IERC20Metadata(token).decimals();
+    uint256 requiredAmount = maxWithDecimals / 100;
+    
+    uint256 preBalance = IERC20(token).balanceOf(address(this));
+    require(IERC20(token).transferFrom(msg.sender, address(this), requiredAmount), "Transfer failed");
+    require(IERC20(token).balanceOf(address(this)) - preBalance == requiredAmount, "Invalid transfer amount");
+
+    uint256 plpfBalance = IERC20(currentPLPF).balanceOf(address(this));
+    require(plpfBalance > 0, "No PLPF to break");
+    
+    uint256 preFallautBalance = balanceOf(address(this));
+    uint256 currentTopPLPBalance = IERC20(getCurrentTopPLP()).balanceOf(address(this));
+    
+    _removeLiquidity(currentPLPF);
+    
+    uint256 fallautReceived = balanceOf(address(this)) - preFallautBalance;
+    uint256 plpReceived = IERC20(getCurrentTopPLP()).balanceOf(address(this)) - currentTopPLPBalance;
+    require(fallautReceived > 0 && plpReceived > 0, "Liquidity break failed");
+
+    uint256 plpForNewPair = plpReceived / 2;
+    uint256 plpForPLS = plpReceived - plpForNewPair;
+
+    address previousPLP = getCurrentTopPLP();
+    address newPLP = factory.createPair(previousPLP, token);
+    require(factory.getPair(previousPLP, token) == newPLP, "Pair creation failed");
+
+    IERC20(previousPLP).approve(address(router), plpForNewPair);
+    IERC20(token).approve(address(router), requiredAmount);
+    router.addLiquidity(
+        previousPLP,
+        token,
+        plpForNewPair,
+        requiredAmount,
+        0,
+        0,
+        address(this),
+        block.timestamp + 300
+    );
+
+    if(plsStack >= MIN_PLS_FOR_OPS) {
+        _createAndAddPLSPair(previousPLP, plpForPLS);
+    }
+
+    address newPLPF = factory.createPair(address(this), newPLP);
+    require(factory.getPair(address(this), newPLP) == newPLPF, "PLPF creation failed");
+
+    _approve(address(this), address(router), fallautReceived);
+    IERC20(newPLP).approve(address(router), type(uint256).max);
+    router.addLiquidity(
+        address(this),
+        newPLP,
+        fallautReceived,
+        IERC20(newPLP).balanceOf(address(this)),
+        0,
+        0,
+        address(this),
+        block.timestamp + 300
+    );
+
+    address oldPLPF = currentPLPF;
+    currentPLPF = newPLPF;
+    pairs[currentLevel] = PairInfo({
+        pair: newPLP,
+        plsPair: address(0),
+        token: token,
+        established: false
+    });
+    
+    registeredTokens[token] = true;
+    currentLevel++;
+    
+    emit TokenRegistered(token, requiredAmount, currentLevel - 1);
+    emit PLPFUpdated(oldPLPF, newPLPF, currentLevel - 1);   
+    }
+
+
     function _createAndAddPLSPair(address token, uint256 tokenAmount) private {
+        
         address plsPair = factory.createPair(token, WPLS);
         require(factory.getPair(token, WPLS) == plsPair, "PLS pair creation failed");
-        
+        isRegisteredPair[plsPair] = true;
         IERC20(token).approve(address(router), tokenAmount);
         _addPLSLiquidity(token, plsStack, tokenAmount);
         
@@ -409,52 +526,6 @@ contract FALLAUT is ERC20 {
                 block.timestamp + 300
             );
         }
-    }
-
-        function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual override {
-        require(from != address(0) && to != address(0), "Invalid address");
-        require(launched, "Not launched");
-        
-        if(swapping) {
-            super._transfer(from, to, amount);
-            return;
-        }
-        
-        uint256 taxAmount = (amount * TAX_RATE) / 100;
-        uint256 transferAmount = amount - taxAmount;
-        
-        if(taxAmount > 0) {
-            super._transfer(from, address(this), taxAmount);
-            _handleTax();
-        }
-        
-        super._transfer(from, to, transferAmount);
-    }
-
-    function _handleTax() private {
-        if(swapping) return;
-        swapping = true;
-        
-        uint256 fallautBalance = balanceOf(address(this));
-        if(fallautBalance > 0) {
-            _swapFallautForPLS(fallautBalance);
-            
-            uint256 plsBalance = address(this).balance;
-            if(plsBalance > MIN_PLS_FOR_OPS) {
-                uint256 toStack = plsBalance / 2;
-                plsStack += toStack;
-                
-                if(plsBalance > toStack) {
-                    _distributePLS(plsBalance - toStack);
-                }
-            }
-        }
-        
-        swapping = false;
     }
 
     function _swapFallautForPLS(uint256 amount) private {
