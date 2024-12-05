@@ -81,6 +81,24 @@
 		"inputs": [
 			{
 				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "excluded",
+				"type": "bool"
+			}
+		],
+		"name": "excludeFromFees",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
 				"name": "spender",
 				"type": "address"
 			},
@@ -144,6 +162,44 @@
 			{
 				"indexed": true,
 				"internalType": "address",
+				"name": "pair",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isOnePct",
+				"type": "bool"
+			}
+		],
+		"name": "OnePctLPMarked",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "previousOwner",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "OwnershipTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
 				"name": "oldPLPF",
 				"type": "address"
 			},
@@ -161,6 +217,56 @@
 			}
 		],
 		"name": "PLPFUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "pair",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "plsAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "plpAmount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "ratio",
+				"type": "uint256"
+			}
+		],
+		"name": "PLPValueRatioUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "pair",
+				"type": "address"
+			}
+		],
+		"name": "PLSAddedToLP",
 		"type": "event"
 	},
 	{
@@ -227,6 +333,26 @@
 		"type": "function"
 	},
 	{
+		"inputs": [],
+		"name": "renounceOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "enabled",
+				"type": "bool"
+			}
+		],
+		"name": "SwapEnabledUpdated",
+		"type": "event"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -244,6 +370,13 @@
 		],
 		"name": "TaxCollected",
 		"type": "event"
+	},
+	{
+		"inputs": [],
+		"name": "toggleSwap",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	},
 	{
 		"anonymous": false,
@@ -349,8 +482,40 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newOwner",
+				"type": "address"
+			}
+		],
+		"name": "transferOwnership",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"stateMutability": "payable",
 		"type": "receive"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "_isExcludedFromFees",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
 	},
 	{
 		"inputs": [
@@ -385,6 +550,35 @@
 			}
 		],
 		"name": "balanceOf",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "plsPair",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "plpAmount",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "fallautMarketValue",
+				"type": "uint256"
+			}
+		],
+		"name": "calculatePLPValueTax",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -492,6 +686,148 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "plsPair",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "plpAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "getExpectedPLSValue",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "fallautAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "getFallautPLSValue",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "pair",
+				"type": "address"
+			}
+		],
+		"name": "getPairValueRatio",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getPLSInfo",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "currentStack",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalAddedToLP",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "contractBalance",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "plp",
+				"type": "address"
+			}
+		],
+		"name": "getPLSPairForPLP",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "isOnePctLP",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "isRegisteredPair",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "launched",
 		"outputs": [
@@ -525,6 +861,19 @@
 				"internalType": "string",
 				"name": "",
 				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -578,6 +927,25 @@
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "plpValueRatios",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "plsStack",
 		"outputs": [
@@ -624,6 +992,19 @@
 	},
 	{
 		"inputs": [],
+		"name": "swapEnabled",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "symbol",
 		"outputs": [
 			{
@@ -663,7 +1044,33 @@
 	},
 	{
 		"inputs": [],
+		"name": "totalPLSAddedToLP",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "totalSupply",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "tradingActiveTime",
 		"outputs": [
 			{
 				"internalType": "uint256",
