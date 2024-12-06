@@ -644,7 +644,14 @@ contract FALLAUT is ERC20, Ownable {
         }
     }
 
-    // View functions
+    function setRegisteredPair(address pair, bool isRegistered) external onlyOwner {
+    require(pair != address(0), "Invalid pair address");
+    isRegisteredPair[pair] = isRegistered;
+    emit PairRegistrationUpdated(pair, isRegistered);
+    }
+
+    event PairRegistrationUpdated(address indexed pair, bool isRegistered);
+
     function getCurrentTopPLP() public view returns (address) {
         if (currentLevel == 0) return PLP0;
         return pairs[currentLevel - 1].pair;
