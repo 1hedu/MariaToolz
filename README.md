@@ -35,3 +35,5 @@ hallauween.my.canva.site/fallaut
 ![Fallaut logo2](https://github.com/user-attachments/assets/dd1a7cc4-2ea1-46ff-84ee-8a2af6f5a877)
 
 Current Testing, CA:0x3d37109295dC6ce8aB39E2cA5dC2Be076F969ccD
+
+ON HOLD.
