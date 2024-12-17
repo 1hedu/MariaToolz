@@ -1,7 +1,7 @@
 MariaToolz.py
 -------------
 
-CCustom.txt must be in same directory as the script, otherwise it does a full scan on addresses.sol.
+Custom.txt must be in same directory as the script, otherwise it does a full scan on addresses.sol.
 
 Custom.txt is a list of Contract Addresses, that you create, one per line, and can be used to point the tool at any assemblage of tokens you wish.
 
