@@ -13,7 +13,7 @@ Works like the LAU factory, where you run a function to deploy a token. It costs
 
 To use: First Approve 1 AFFECTION to be spent by the EasterIslandGod Contract. Then run 'EasterIslandTaxCollector' function.
 
-This function will deploy an EASTr contract, which you customized name/symbol/supply,reward.
+This function will deploy an EASTr contract, which you customized name/symbol/supply/reward.
 
 EASTr deployments:
 ---------------------------------------------------------------------------------
